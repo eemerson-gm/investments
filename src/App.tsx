@@ -1,33 +1,50 @@
 import { ChartData } from "chart.js";
 import { Field, FieldArray, Form, Formik } from "formik";
 import moment from "moment";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { InvestmentInput } from "./components/InvestmentInput";
-import { caulcuateInvestment } from "./functions/Earnings";
+import { caulcuateInvestment } from "./functions/Investments";
 import { SalaryInput } from "./components/SalaryInput";
 import { PaymentInput } from "./components/PaymentInput";
 
-interface SaveData {
-  months: number;
-  investments: any[];
+const formComponents = {
+  investment: InvestmentInput,
+  salary: SalaryInput,
+  payment: PaymentInput,
+};
+
+interface Investment {
+  type: keyof typeof formComponents;
+  name?: string;
+  amount?: number;
+  percent?: number;
 }
 
-const investmentOptions = [
-  {
-    type: "Investment",
-    component: InvestmentInput,
-  },
-  {
-    type: "Salary",
-    component: SalaryInput,
-  },
-  {
-    type: "Payment",
-    component: PaymentInput,
-  },
+interface SaveData {
+  base: number;
+  months: number;
+  investments: Investment[];
+}
+
+const investmentColors = [
+  "red",
+  "orange",
+  "olive",
+  "slateblue",
+  "skyblue",
+  "slategrey",
+  "teal",
+  "maroon",
+  "royalblue",
 ];
-const investmentColors = ["red", "orange", "yellow", "green", "blue", "purple"];
+
+const defaultFormData = {
+  type: "investment",
+  name: "",
+  amount: 100,
+  percent: 5,
+} as Investment;
 
 const App = () => {
   const saveData = JSON.parse(
@@ -38,41 +55,69 @@ const App = () => {
     Object.keys(saveData).length > 0
       ? saveData
       : {
+          base: 0,
           months: 12,
-          investments: [
-            {
-              type: "investment",
-              amount: 100,
-              percent: 5,
-            },
-          ],
+          investments: [defaultFormData],
         }
   );
 
-  const calculatedEarnings = formData.investments.map((investment, index) => ({
-    label: `${index}`,
-    data: Array.from({ length: Number(formData.months + 1) }, (_, index) =>
-      caulcuateInvestment(index, investment)
-    ),
-    borderColor: investmentColors[index],
-  }));
+  const monthsLength = Number(formData.months + 1);
 
-  const data = {
-    labels: Array.from({ length: Number(formData.months + 1) }, (_, index) =>
-      moment().add(index, "M").format("MM-YYYY")
-    ),
-    datasets: [
-      ...calculatedEarnings,
-      {
-        label: "Total",
-        data: Array.from({ length: Number(formData.months + 1) }, (_, index) =>
-          calculatedEarnings.reduce((acc, value) => acc + value.data[index], 0)
+  const formGraphData = useMemo(
+    () =>
+      formData.investments.map((investment, index) => ({
+        label: `${investment.name || index}`,
+        data: Array.from({ length: monthsLength }, (_, index) =>
+          caulcuateInvestment(index, investment)
         ),
-      },
-    ],
-  } as ChartData<"line">;
+      })),
+    [formData.investments, monthsLength]
+  );
 
-  console.log(data);
+  const totalGraphData = useMemo(
+    () => ({
+      label: "Total",
+      data: Array.from({ length: monthsLength }, (_, index) =>
+        formGraphData.reduce(
+          (acc, value) => acc + value.data[index],
+          formData.base
+        )
+      ),
+    }),
+    [formData.base, formGraphData, monthsLength]
+  );
+
+  const investmentGraphData = useMemo(
+    () => ({
+      label: "Investments",
+      data: Array.from({ length: monthsLength }, (_, index) =>
+        formGraphData
+          .filter(
+            (_, index) =>
+              !["salary", "payment"].includes(formData.investments[index].type)
+          )
+          .reduce((acc, value) => acc + value.data[index], 0)
+      ),
+    }),
+    [formData.investments, formGraphData, monthsLength]
+  );
+
+  const lineData = useMemo(
+    () =>
+      ({
+        labels: Array.from({ length: monthsLength }, (_, index) =>
+          moment().add(index, "M").format("MM-YYYY")
+        ),
+        datasets: [...formGraphData, totalGraphData, investmentGraphData].map(
+          (dataset, index) => ({
+            ...dataset,
+            borderColor: investmentColors[index % investmentColors.length],
+            backgroundColor: investmentColors[index % investmentColors.length],
+          })
+        ),
+      } as ChartData<"line">),
+    [formGraphData, investmentGraphData, monthsLength, totalGraphData]
+  );
 
   const handleSubmit = (data: any) => {
     localStorage.setItem("saveData", JSON.stringify(data));
@@ -84,13 +129,36 @@ const App = () => {
       <div className="flex flex-col justify-center items-center">
         <div className="w-[800px]">
           <div className="m-2 border border-solid">
-            <Line data={data} />
+            <Line data={lineData} />
           </div>
           <div className="flex">
             <Formik initialValues={formData} onSubmit={handleSubmit}>
               {({ values }) => (
                 <Form className="m-2 w-full">
                   <div className="flex flex-col gap-2">
+                    <div>
+                      Starting Amount: ${totalGraphData.data[0].toFixed(0)}
+                    </div>
+                    <div>
+                      Total Earnings: $
+                      {(
+                        totalGraphData.data[monthsLength - 1] -
+                        totalGraphData.data[0]
+                      ).toFixed(0)}
+                    </div>
+                    <div>
+                      Investment Earnings: $
+                      {(
+                        investmentGraphData.data[monthsLength - 1] -
+                        investmentGraphData.data[0]
+                      ).toFixed(0)}
+                    </div>
+                    <Field
+                      type="number"
+                      className="border border-solid"
+                      placeholder="Base Amount..."
+                      name="base"
+                    />
                     <Field
                       type="number"
                       className="border border-solid"
@@ -101,10 +169,10 @@ const App = () => {
                       {({ remove, push }) => (
                         <div className="flex flex-col gap-2">
                           {values.investments.map((investment, index) => {
-                            const InvestmentComponent = investmentOptions.find(
-                              (option) =>
-                                option.type.toLowerCase() === investment.type
-                            )?.component;
+                            const InvestmentComponent =
+                              formComponents[
+                                investment.type as keyof typeof formComponents
+                              ];
                             if (!InvestmentComponent) return null;
                             return (
                               <div
@@ -116,19 +184,21 @@ const App = () => {
                                   name={`investments.${index}.type`}
                                   className="border border-solid"
                                 >
-                                  {investmentOptions.map((option) => (
-                                    <option
-                                      key={option.type}
-                                      value={option.type.toLowerCase()}
-                                    >
-                                      {option.type}
+                                  {Object.keys(formComponents).map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
                                     </option>
                                   ))}
                                 </Field>
+                                <Field
+                                  placeholder="Name..."
+                                  className="border border-solid"
+                                  name={`investments.${index}.name`}
+                                />
                                 <InvestmentComponent index={index} />
                                 <button
                                   type="button"
-                                  className="border border-solid"
+                                  className="px-2 border border-solid"
                                   onClick={() => remove(index)}
                                 >
                                   X
@@ -138,20 +208,17 @@ const App = () => {
                           })}
                           <button
                             type="button"
-                            onClick={() =>
-                              push({
-                                type: "investment",
-                                amount: 100,
-                                percent: 5,
-                              })
-                            }
+                            className="border border-solid"
+                            onClick={() => push(defaultFormData)}
                           >
                             Add
                           </button>
                         </div>
                       )}
                     </FieldArray>
-                    <button type="submit">Submit</button>
+                    <button type="submit" className="border border-solid">
+                      Submit
+                    </button>
                   </div>
                 </Form>
               )}

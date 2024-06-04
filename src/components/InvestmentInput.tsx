@@ -5,22 +5,20 @@ interface InvestmentProps {
 }
 
 const InvestmentInput: React.FC<InvestmentProps> = ({ index }) => (
-  <div className="flex flex-row gap-2">
+  <>
     <Field
       type="number"
       className="border border-solid"
       placeholder="Start Amount..."
       name={`investments.${index}.amount`}
     />
-    <div className="border border-solid">
-      <Field
-        type="number"
-        placeholder="Percent..."
-        name={`investments.${index}.percent`}
-      />
-      %
-    </div>
-  </div>
+    <Field
+      type="number"
+      className="border border-solid"
+      placeholder="Percent..."
+      name={`investments.${index}.percent`}
+    />
+  </>
 );
 
 export { InvestmentInput };
