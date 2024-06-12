@@ -1,6 +1,9 @@
 const getInvestment = (months: number, investment: any) => {
+  const additions = investment.add * months;
   return (
-    investment.amount * Math.pow(1 + investment.percent / 100 / 12, months)
+    (investment.amount + additions) *
+      Math.pow(1 + investment.percent / 100 / 12, months) -
+    (investment.amount + additions)
   );
 };
 
