@@ -1,13 +1,12 @@
-import { Field } from "formik";
+import { Input } from "../dashboard/Input";
 
 interface InvestmentProps {
   index: number;
 }
 
 const PaymentInput: React.FC<InvestmentProps> = ({ index }) => (
-  <Field
+  <Input
     type="number"
-    className="border border-solid w-full"
     placeholder="Monthly Payment..."
     name={`investments.${index}.amount`}
   />

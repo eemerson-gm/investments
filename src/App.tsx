@@ -1,8 +1,5 @@
-import { ChartData } from "chart.js";
-import { FieldArray, Form, Formik } from "formik";
-import moment from "moment";
+import { Field, FieldArray, Form, Formik } from "formik";
 import { useMemo, useState } from "react";
-import { caulcuateInvestment } from "./functions/Investments";
 import {
   FieldOption,
   formComponents,
@@ -13,6 +10,8 @@ import { Grid } from "./components/dashboard/Grid";
 import { Input } from "./components/dashboard/Input";
 import { Tag } from "./components/dashboard/Tag";
 import { last } from "lodash";
+import { caulcuateInvestment } from "./functions/Calculator";
+import { getGraphData, getLineData } from "./functions/GraphData";
 
 interface Investment {
   type: keyof typeof formComponents;
@@ -22,22 +21,11 @@ interface Investment {
 }
 
 interface SaveData {
-  base: number;
+  salary: number;
   months: number;
   investments: Investment[];
+  settings: boolean[];
 }
-
-const investmentColors = [
-  "red",
-  "orange",
-  "olive",
-  "slateblue",
-  "skyblue",
-  "slategrey",
-  "teal",
-  "maroon",
-  "royalblue",
-];
 
 const defaultFormData = {
   type: "investment",
@@ -56,9 +44,10 @@ const App = () => {
     Object.keys(saveData).length > 0
       ? saveData
       : {
-          base: 0,
+          salary: 0,
           months: 12,
           investments: [defaultFormData],
+          settings: [false],
         }
   );
 
@@ -66,47 +55,46 @@ const App = () => {
 
   const formGraphData = useMemo(
     () =>
-      formData.investments.map((investment, index) => ({
-        label: `${investment.name || index}`,
-        data: Array.from({ length: monthsLength }, (_, index) =>
-          caulcuateInvestment(index, investment)
-        ),
-      })),
-    [formData.investments, monthsLength]
-  );
-
-  const investmentGraphData = useMemo(
-    () => ({
-      label: "Total",
-      data: Array.from({ length: monthsLength }, (_, index) =>
-        formGraphData
-          .filter(
-            (_, index) => formData.investments[index].type === "investment"
-          )
-          .reduce((acc, value) => acc + value.data[index], 0)
+      formData.investments.map((investment, index) =>
+        getGraphData(investment.name!, monthsLength, (index) => {
+          if (formData.settings[0]) {
+            return (
+              caulcuateInvestment(index, investment) + (investment.amount || 0)
+            );
+          }
+          return caulcuateInvestment(index, investment);
+        })
       ),
-    }),
-    [formData.investments, formGraphData, monthsLength]
+    [formData.investments, formData.settings, monthsLength]
   );
 
-  const lineData = useMemo(
+  const salaryGraphData = useMemo(
     () =>
-      ({
-        labels: Array.from({ length: monthsLength }, (_, index) =>
-          moment().add(index, "M").format("MMM YYYY")
-        ),
-        datasets: [...formGraphData, investmentGraphData].map(
-          (dataset, index) => ({
-            ...dataset,
-            borderColor: investmentColors[index % investmentColors.length],
-            backgroundColor: investmentColors[index % investmentColors.length],
-            pointRadius: 4,
-            pointHoverRadius: 6,
-          })
-        ),
-      } as ChartData<"line">),
-    [formGraphData, investmentGraphData, monthsLength]
+      getGraphData("Salary", monthsLength, (index) => formData.salary * index),
+    [formData.salary, monthsLength]
   );
+
+  const totalGraphData = useMemo(
+    () =>
+      getGraphData(
+        "Total",
+        monthsLength,
+        (index) =>
+          formGraphData
+            .filter(
+              (_, index) => formData.investments[index].type === "investment"
+            )
+            .reduce((acc, value) => acc + value.data[index], 0) +
+          salaryGraphData.data[index]
+      ),
+    [formData.investments, formGraphData, monthsLength, salaryGraphData.data]
+  );
+
+  const lineData = getLineData(monthsLength, [
+    ...formGraphData,
+    salaryGraphData,
+    totalGraphData,
+  ]);
 
   const handleSubmit = (data: any) => {
     console.log(data);
@@ -119,7 +107,7 @@ const App = () => {
       <div className="flex flex-col justify-center items-center">
         <div className="w-[1000px]">
           <FlexCard className="flex-col justify-center items-center">
-            <span className="text-lg">Total Earnings</span>
+            <span className="text-lg">Interest Earned</span>
             <Grid
               data={lineData}
               labelSize={14}
@@ -140,10 +128,14 @@ const App = () => {
               {({ values }) => (
                 <Form className="m-2 w-full">
                   <div className="flex flex-col gap-2">
+                    <div className="flex flex-row gap-2">
+                      <Field type="checkbox" name="settings.0" />
+                      Show totals
+                    </div>
                     <Input
                       type="number"
-                      placeholder="Base Amount..."
-                      name="base"
+                      placeholder="Salary..."
+                      name="salary"
                     />
                     <Input
                       type="number"
