@@ -1,8 +1,9 @@
-import { Field } from "formik";
+import { Field, FieldProps } from "formik";
 import { InvestmentInput } from "../inputs/InvestmentInput";
 import { PaymentInput } from "../inputs/PaymentInput";
 import { Input } from "./Input";
 import { ComponentWithProps } from "./Types";
+import { Dropdown, Form } from "react-bootstrap";
 
 export const formComponents = {
   investment: InvestmentInput,
@@ -23,16 +24,16 @@ export const FieldOption: ComponentWithProps<FieldOptionProps> = ({
   if (!InvestmentComponent) return null;
   return (
     <>
-      <Field
-        component="select"
-        name={`investments.${index}.type`}
-        className="text-black"
-      >
-        {Object.keys(formComponents).map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
+      <Field name={`investments.${index}.type`}>
+        {({ field, form, meta }: FieldProps) => (
+          <Form.Select {...field}>
+            {Object.keys(formComponents).map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </Form.Select>
+        )}
       </Field>
       <Input placeholder="Name..." name={`investments.${index}.name`} />
       <InvestmentComponent index={index} />
