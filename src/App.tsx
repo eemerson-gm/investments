@@ -1,22 +1,23 @@
-import { Field, FieldArray, Form, Formik } from "formik";
+import { Field, FieldArray, FieldProps, Form, Formik } from "formik";
 import { useMemo, useState } from "react";
-import {
-  FieldOption,
-  formComponents,
-} from "./components/dashboard/FieldOption";
-import { FlexCard } from "./components/dashboard/FlexCard";
+import { Option, formComponents } from "./components/dashboard/Option";
+import { Card } from "./components/form/Card";
 import colors from "tailwindcss/colors";
 import { Grid } from "./components/dashboard/Grid";
-import { Input } from "./components/dashboard/Input";
-import { Tag } from "./components/dashboard/Tag";
+import { Input } from "./components/form/Input";
+import { Tag } from "./components/form/Tag";
 import { last } from "lodash";
 import { caulcuateInvestment } from "./functions/Calculator";
 import { getGraphData, getLineData } from "./functions/GraphData";
+import { Button } from "./components/form/Button";
+import { Submit } from "./components/form/Submit";
+import { Switch } from "./components/form/Switch";
 
 interface Investment {
   type: keyof typeof formComponents;
   name?: string;
   amount?: number;
+  add?: number;
   percent?: number;
 }
 
@@ -55,9 +56,16 @@ const App = () => {
 
   const formGraphData = useMemo(
     () =>
-      formData.investments.map((investment, index) =>
+      formData.investments.map((investment) =>
         getGraphData(investment.name!, monthsLength, (index) => {
           if (formData.settings[0]) {
+            // if (investment.type === "loan") {
+            //   return (
+            //     caulcuateInvestment(index, investment) -
+            //     (investment.amount || 0) +
+            //     (investment.add || 0) * index
+            //   );
+            // }
             return (
               caulcuateInvestment(index, investment) + (investment.amount || 0)
             );
@@ -106,7 +114,7 @@ const App = () => {
     <div className="App">
       <div className="flex flex-col justify-center items-center">
         <div className="w-[1000px]">
-          <FlexCard className="flex-col justify-center items-center">
+          <Card className="flex-col justify-center items-center">
             <span className="text-lg">Interest Earned</span>
             <Grid
               data={lineData}
@@ -115,30 +123,34 @@ const App = () => {
               gridColor={colors.gray["500"]}
               gridSize={2}
             />
-          </FlexCard>
-          <FlexCard className="gap-2">
+          </Card>
+          <Card className="gap-2">
             {lineData.datasets.map((data) => (
               <Tag style={{ backgroundColor: data.backgroundColor as string }}>
                 ${Number(last(data.data)).toFixed(2)}
               </Tag>
             ))}
-          </FlexCard>
-          <FlexCard>
+          </Card>
+          <Card>
             <Formik initialValues={formData} onSubmit={handleSubmit}>
               {({ values }) => (
                 <Form className="m-2 w-full">
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2">
-                      <Field type="checkbox" name="settings.0" />
+                      <Field type="checkbox" name="settings.0">
+                        {({ field }: FieldProps) => <Switch {...field} />}
+                      </Field>
                       Show totals
                     </div>
                     <Input
                       type="number"
+                      label="Salary (Monthly)"
                       placeholder="Salary..."
                       name="salary"
                     />
                     <Input
                       type="number"
+                      label="Months"
                       placeholder="Months..."
                       name="months"
                     />
@@ -150,37 +162,22 @@ const App = () => {
                               key={`${index}`}
                               className="flex flex-row gap-2 flex-shrink"
                             >
-                              <FieldOption
-                                investment={investment}
-                                index={index}
-                              />
-                              <button
-                                type="button"
-                                className="px-2 border border-solid"
-                                onClick={() => remove(index)}
-                              >
-                                X
-                              </button>
+                              <Option investment={investment} index={index} />
+                              <Button onClick={() => remove(index)}>X</Button>
                             </div>
                           ))}
-                          <button
-                            type="button"
-                            className="border border-solid"
-                            onClick={() => push(defaultFormData)}
-                          >
+                          <Button onClick={() => push(defaultFormData)}>
                             Add
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </FieldArray>
-                    <button type="submit" className="border border-solid">
-                      Submit
-                    </button>
+                    <Submit>Save and update</Submit>
                   </div>
                 </Form>
               )}
             </Formik>
-          </FlexCard>
+          </Card>
         </div>
       </div>
     </div>

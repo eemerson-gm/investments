@@ -1,15 +1,12 @@
-import { Input } from "../dashboard/Input";
+import { Input } from "../form/Input";
+import { JSXComponentProps } from "../Types";
+import { InvestmentProps } from "./InvestmentInput";
 
-interface InvestmentProps {
-  index: number;
-}
-
-const PaymentInput: React.FC<InvestmentProps> = ({ index }) => (
+export const PaymentInput: JSXComponentProps<InvestmentProps> = ({ index }) => (
   <Input
     type="number"
+    label="Amount"
     placeholder="Monthly Payment..."
     name={`investments.${index}.amount`}
   />
 );
-
-export { PaymentInput };

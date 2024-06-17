@@ -1,6 +1,6 @@
 import { Chart, ChartData, Point } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { ComponentWithProps } from "./Types";
+import { JSXComponentProps } from "../Types";
 
 interface GridProps {
   data: ChartData<"line", (number | Point | null)[], unknown>;
@@ -12,7 +12,7 @@ interface GridProps {
 
 Chart.defaults.color = "white";
 
-const Grid: ComponentWithProps<GridProps> = ({
+const Grid: JSXComponentProps<GridProps> = ({
   data,
   labelSize,
   scaleSize,

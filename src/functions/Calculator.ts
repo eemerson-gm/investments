@@ -1,31 +1,29 @@
 const getInvestment = (months: number, investment: any) => {
-  const additions = investment.add * months;
-  return (
-    (investment.amount + additions) *
-      Math.pow(1 + investment.percent / 100 / 12, months) -
-    (investment.amount + additions)
-  );
+  const monthlyTotal = investment.amount + investment.add * months;
+  return monthlyTotal * getMonthlyPercent(investment.percent, months);
 };
-
-const getSalary = (months: number, investment: any) => {
-  return investment.amount * months;
-};
-
 const getPayment = (months: number, investment: any) => {
   return -(investment.amount * months);
+};
+// TODO: Fix loan option
+const getLoan = (months: number, investment: any) => {
+  const monthlyTotal = investment.amount - investment.add * months;
+  return -(monthlyTotal * getMonthlyPercent(investment.percent, months));
 };
 
 const investmentFunctions = {
   investment: getInvestment,
-  salary: getSalary,
   payment: getPayment,
+  loan: getLoan,
 };
 
+const getMonthlyPercent = (percent: number, months: number) =>
+  Math.pow(1 + percent / 100 / 12, months) - 1;
+
 const caulcuateInvestment = (months: number, investment: any) => {
-  console.log(investment);
   return investmentFunctions[
     investment.type as keyof typeof investmentFunctions
   ](months, investment);
 };
 
-export { caulcuateInvestment };
+export { caulcuateInvestment, getMonthlyPercent };

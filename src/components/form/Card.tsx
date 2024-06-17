@@ -1,6 +1,6 @@
-import { Component } from "./Types";
+import { JSXComponent } from "../Types";
 
-export const FlexCard: Component = ({ children, className, ...props }) => (
+export const Card: JSXComponent = ({ children, className, ...props }) => (
   <div className="m-4 rounded text-white bg-gray-600">
     <div className={`flex p-4 ${className}`} {...props}>
       {children}
