@@ -1,20 +1,23 @@
 const getInvestment = (months: number, investment: any) => {
-  const monthlyTotal = investment.amount + investment.add * months;
+  const monthlyTotal = Math.abs(investment.amount) + investment.add * months;
   return monthlyTotal * getMonthlyPercent(investment.percent, months);
 };
 const getPayment = (months: number, investment: any) => {
   return -(investment.amount * months);
 };
-// TODO: Fix loan option
-const getLoan = (months: number, investment: any) => {
-  const monthlyTotal = investment.amount - investment.add * months;
-  return -(monthlyTotal * getMonthlyPercent(investment.percent, months));
+const getDebt = (months: number, investment: any) => {
+  let total = 0;
+  for (let m = 0; m < months; m++) {
+    const monthlyTotal = Math.max(0, investment.amount - investment.add * m);
+    total += monthlyTotal * (investment.percent / 12 / 100);
+  }
+  return -total;
 };
 
 const investmentFunctions = {
   investment: getInvestment,
   payment: getPayment,
-  loan: getLoan,
+  debt: getDebt,
 };
 
 const getMonthlyPercent = (percent: number, months: number) =>

@@ -57,21 +57,13 @@ const App = () => {
   const formGraphData = useMemo(
     () =>
       formData.investments.map((investment) =>
-        getGraphData(investment.name!, monthsLength, (index) => {
-          if (formData.settings[0]) {
-            // if (investment.type === "loan") {
-            //   return (
-            //     caulcuateInvestment(index, investment) -
-            //     (investment.amount || 0) +
-            //     (investment.add || 0) * index
-            //   );
-            // }
-            return (
-              caulcuateInvestment(index, investment) + (investment.amount || 0)
-            );
-          }
-          return caulcuateInvestment(index, investment);
-        })
+        getGraphData(
+          investment.name!,
+          monthsLength,
+          (index) =>
+            caulcuateInvestment(index, investment) +
+            ((formData.settings[0] && investment.amount) || 0)
+        )
       ),
     [formData.investments, formData.settings, monthsLength]
   );

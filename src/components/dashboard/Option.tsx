@@ -4,11 +4,12 @@ import { PaymentInput } from "../inputs/PaymentInput";
 import { Input } from "../form/Input";
 import { JSXComponentProps } from "../Types";
 import { Form } from "react-bootstrap";
+import { DebtInput } from "../inputs/DebtInput";
 
 export const formComponents = {
   investment: InvestmentInput,
   payment: PaymentInput,
-  //loan: LoanInput,
+  debt: DebtInput,
 };
 
 interface OptionProps {
@@ -26,7 +27,7 @@ export const Option: JSXComponentProps<OptionProps> = ({
   return (
     <>
       <Field name={`investments.${index}.type`}>
-        {({ field, form, meta }: FieldProps) => (
+        {({ field }: FieldProps) => (
           <div className="flex flex-col w-full">
             <span>Type</span>
             <Form.Select className="h-full" {...field}>
