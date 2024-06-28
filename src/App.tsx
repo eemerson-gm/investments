@@ -12,6 +12,7 @@ import { getGraphData, getLineData } from "./functions/GraphData";
 import { Button } from "./components/form/Button";
 import { Submit } from "./components/form/Submit";
 import { Switch } from "./components/form/Switch";
+import { OverlayTrigger, Tooltip } from "react-bootstrap";
 
 interface Investment {
   type: keyof typeof formComponents;
@@ -54,18 +55,21 @@ const App = () => {
 
   const monthsLength = Number(formData.months + 1);
 
+  const formOption = useMemo(() => {
+    if (formData.settings[0]) {
+      return "total";
+    }
+    return "earned";
+  }, [formData.settings]);
+
   const formGraphData = useMemo(
     () =>
       formData.investments.map((investment) =>
-        getGraphData(
-          investment.name!,
-          monthsLength,
-          (index) =>
-            caulcuateInvestment(index, investment) +
-            ((formData.settings[0] && investment.amount) || 0)
+        getGraphData(investment.name!, monthsLength, (index) =>
+          caulcuateInvestment(index, investment, formOption)
         )
       ),
-    [formData.investments, formData.settings, monthsLength]
+    [formData.investments, formOption, monthsLength]
   );
 
   const salaryGraphData = useMemo(
@@ -118,9 +122,16 @@ const App = () => {
           </Card>
           <Card className="gap-2">
             {lineData.datasets.map((data) => (
-              <Tag style={{ backgroundColor: data.backgroundColor as string }}>
-                ${Number(last(data.data)).toFixed(2)}
-              </Tag>
+              <OverlayTrigger
+                placement="top"
+                overlay={(props) => <Tooltip {...props}>hello</Tooltip>}
+              >
+                <Tag
+                  style={{ backgroundColor: data.backgroundColor as string }}
+                >
+                  ${Number(last(data.data)).toFixed(2)}
+                </Tag>
+              </OverlayTrigger>
             ))}
           </Card>
           <Card>

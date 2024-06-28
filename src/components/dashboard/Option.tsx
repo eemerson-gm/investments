@@ -1,6 +1,5 @@
 import { Field, FieldProps } from "formik";
 import { InvestmentInput } from "../inputs/InvestmentInput";
-import { PaymentInput } from "../inputs/PaymentInput";
 import { Input } from "../form/Input";
 import { JSXComponentProps } from "../Types";
 import { Form } from "react-bootstrap";
@@ -8,7 +7,6 @@ import { DebtInput } from "../inputs/DebtInput";
 
 export const formComponents = {
   investment: InvestmentInput,
-  payment: PaymentInput,
   debt: DebtInput,
 };
 
